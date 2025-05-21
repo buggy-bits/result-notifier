@@ -1,0 +1,46 @@
+name: Run Result Checker Every Hour
+
+on:
+  schedule:
+    - cron: '15 * * * *'   # For every hour
+  workflow_dispatch:
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Restore last_result.txt from cache
+    - name: Restore last_result.txt cache
+      id: cache-lastresult
+      uses: actions/cache@v4
+      with:
+        path: last_result.txt
+        key: lastresult-cache
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Run script
+      env:
+        EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+        EMAIL_TO: ${{ secrets.EMAIL_TO }}
+        EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+      run: python main.py
+
+    # Save updated last_result.txt to cache
+    - name: Save last_result.txt cache
+      uses: actions/cache@v4
+      with:
+        path: last_result.txt
+        key: lastresult-cache
